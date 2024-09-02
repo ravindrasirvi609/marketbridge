@@ -46,7 +46,7 @@ export default function Home() {
                 between production and distribution.
               </p>
               <a
-                href="#"
+                href="/ProductList"
                 className="bg-[#D8D2CB] text-[#1C658C] px-6 py-3 rounded-lg text-lg font-semibold hover:bg-[#398AB9] hover:text-white transition-colors"
               >
                 Get Started Today
