@@ -1,25 +1,12 @@
-import NextAuth, { DefaultSession } from "next-auth";
-import GoogleProvider from "next-auth/providers/google";
+import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import GoogleProvider from "next-auth/providers/google";
 import { compare } from "bcryptjs";
-import dbConnect from "../../../../../lib/db";
-import User from "../../../../../models/User";
+import User from "../models/User";
+import dbConnect from "./db";
 
-// Extend the built-in session type
-declare module "next-auth" {
-  interface Session {
-    user: {
-      role: string;
-    } & DefaultSession["user"];
-  }
-}
-
-const handler = NextAuth({
+export const authOptions: NextAuthOptions = {
   providers: [
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-    }),
     CredentialsProvider({
       name: "Credentials",
       credentials: {
@@ -28,7 +15,6 @@ const handler = NextAuth({
       },
       async authorize(credentials) {
         await dbConnect();
-
         if (!credentials?.email || !credentials?.password) {
           throw new Error("Invalid credentials");
         }
@@ -40,31 +26,47 @@ const handler = NextAuth({
         }
 
         return {
-          id: user._id,
+          id: user._id.toString(),
           email: user.email,
           name: user.name,
           role: user.role,
         };
       },
     }),
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    }),
   ],
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
+        token.id = user.id;
         token.role = user.role;
       }
       return token;
     },
     async session({ session, token }) {
-      if (session?.user) {
-        session.user.role = token.role as string;
+      if (session.user) {
+        session.user = {
+          ...session.user,
+          id: token.id as string,
+          role: token.role as string,
+        } as {
+          id: string;
+          role: string;
+          name?: string | null | undefined;
+          email?: string | null | undefined;
+          image?: string | null | undefined;
+        };
       }
       return session;
     },
   },
   pages: {
-    signIn: "/auth/signin",
+    signIn: "/login",
   },
-});
-
-export { handler as GET, handler as POST };
+  session: {
+    strategy: "jwt",
+  },
+};
