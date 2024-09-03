@@ -2,6 +2,7 @@ This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next
 
 ## Getting Started
 
+colour Code = #1C658C, #398AB9, #D8D2CB, #EEEEEE
 First, run the development server:
 
 ```bash
