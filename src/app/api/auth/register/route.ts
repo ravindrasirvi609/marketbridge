@@ -4,6 +4,7 @@ import { z } from "zod";
 import { Error as MongooseError } from "mongoose";
 import User from "@/models/User";
 import { connect } from "@/lib/db";
+import { sendEmail } from "@/lib/mailer";
 
 // Define a schema for input validation
 const UserSchema = z.object({
@@ -48,12 +49,23 @@ export async function POST(req: NextRequest) {
       email,
       password: hashedPassword,
       role,
+      provider: "credentials",
     });
 
     await newUser.save();
 
+    // Send verification email
+    await sendEmail({
+      email: newUser.email,
+      emailType: "VERIFY",
+      userId: newUser._id.toString(),
+    });
+
     return NextResponse.json(
-      { message: "User created successfully" },
+      {
+        message:
+          "User created successfully. Please check your email to verify your account.",
+      },
       { status: 201 }
     );
   } catch (error) {

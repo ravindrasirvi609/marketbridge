@@ -14,7 +14,7 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: [
       function (this: any) {
-        return this?.provider !== "google";
+        return this.provider !== "google";
       },
       "Please provide a password",
     ],
@@ -33,7 +33,7 @@ const userSchema = new mongoose.Schema({
   verifyTokenExpiry: Date,
   role: {
     type: String,
-    enum: ["manufacturer", "shopOwner", "ADMIN"],
+    enum: ["manufacturer", "shopOwner", "admin"],
     required: true,
   },
   provider: {
