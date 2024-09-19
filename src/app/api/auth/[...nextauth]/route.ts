@@ -2,8 +2,8 @@ import NextAuth, { DefaultSession } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { compare } from "bcryptjs";
-import dbConnect from "../../../../../lib/db";
-import User from "../../../../../models/User";
+import User from "../../../../models/User";
+import { connect } from "@/lib/db";
 
 // Extend the built-in session type
 declare module "next-auth" {
@@ -27,7 +27,7 @@ const handler = NextAuth({
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        await dbConnect();
+        await connect();
 
         if (!credentials?.email || !credentials?.password) {
           throw new Error("Invalid credentials");
