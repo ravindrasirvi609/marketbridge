@@ -2,8 +2,8 @@ import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import { compare } from "bcryptjs";
-import User from "../src/models/User";
-import dbConnect from "./db";
+import { connect } from "./db";
+import User from "@/models/User";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -14,7 +14,7 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        await dbConnect();
+        await connect();
         if (!credentials?.email || !credentials?.password) {
           throw new Error("Invalid credentials");
         }
