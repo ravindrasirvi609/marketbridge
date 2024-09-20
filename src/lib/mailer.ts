@@ -2,7 +2,12 @@ import User from "@/models/User";
 import bcryptjs from "bcryptjs";
 import { Resend } from "resend";
 
-export const sendEmail = async ({ email, emailType, userId }: any) => {
+export const sendEmail = async ({
+  email,
+  emailType,
+  userId,
+  hashedToken,
+}: any) => {
   try {
     // Check if the emailType is valid (either "VERIFY" or "RESET")
     if (emailType !== "VERIFY" && emailType !== "RESET") {
@@ -12,10 +17,7 @@ export const sendEmail = async ({ email, emailType, userId }: any) => {
     }
 
     // create a hashed token
-    const hashedToken = await bcryptjs.hash(userId.toString(), 10);
     const resend = new Resend(process.env.RESEND_API_KEY!);
-
-    console.log("hashedToken", hashedToken, emailType, email, userId);
 
     if (emailType === "VERIFY") {
       await User.findByIdAndUpdate(userId, {

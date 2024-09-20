@@ -5,13 +5,13 @@ import { Error as MongooseError } from "mongoose";
 import User from "@/models/User";
 import { connect } from "@/lib/db";
 import { sendEmail } from "@/lib/mailer";
+import crypto from "crypto";
 
 // Define a schema for input validation
 const UserSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters long"),
   email: z.string().email("Invalid email address"),
   password: z.string().min(8, "Password must be at least 8 characters long"),
-  role: z.enum(["manufacturer", "shopOwner", "admin"]),
 });
 
 export async function POST(req: NextRequest) {
@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { name, email, password, role } = result.data;
+    const { name, email, password } = result.data;
 
     // Check if user already exists
     const existingUser = await User.findOne({ email });
@@ -48,10 +48,17 @@ export async function POST(req: NextRequest) {
       name,
       email,
       password: hashedPassword,
-      role,
+      isVerified: false,
+      isAdmin: false,
       provider: "credentials",
     });
 
+    await newUser.save();
+
+    // Generate verify token
+    const verifyToken = crypto.randomBytes(32).toString("hex");
+    newUser.verifyToken = verifyToken;
+    newUser.verifyTokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
     await newUser.save();
 
     // Send verification email
@@ -59,6 +66,7 @@ export async function POST(req: NextRequest) {
       email: newUser.email,
       emailType: "VERIFY",
       userId: newUser._id.toString(),
+      token: verifyToken,
     });
 
     return NextResponse.json(
