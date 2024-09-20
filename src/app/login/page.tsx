@@ -9,33 +9,58 @@ export default function Login() {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
-    remember: false,
   });
   const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
   const router = useRouter();
 
-  const handleChange = (e: any) => {
-    const { name, value, type, checked } = e.target;
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
     setFormData((prevState) => ({
       ...prevState,
-      [name]: type === "checkbox" ? checked : value,
+      [name]: value,
     }));
   };
 
-  const handleSubmit = async (e: any) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
+    setMessage("");
 
-    const result = await signIn("credentials", {
-      redirect: false,
-      email: formData.email,
-      password: formData.password,
-    });
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+        }),
+      });
 
-    if (result?.error) {
-      setError(result.error);
-    } else {
-      router.push("/dashboard");
+      const data = await response.json();
+
+      if (response.ok) {
+        // Use NextAuth to set the session
+        const result = await signIn("credentials", {
+          redirect: false,
+          email: formData.email,
+          password: formData.password,
+        });
+
+        if (result?.error) {
+          setError(result.error);
+        } else {
+          router.push("/dashboard");
+        }
+      } else {
+        if (data.error === "Please verify your email before logging in") {
+          setMessage(data.error);
+        } else {
+          setError(data.error || "Login failed");
+        }
+      }
+    } catch (error) {
+      setError("An error occurred. Please try again.");
     }
   };
 
@@ -54,6 +79,7 @@ export default function Login() {
           Login to MarketBridge
         </h1>
         {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+        {message && <p className="text-yellow-500 text-sm mb-4">{message}</p>}
         <form onSubmit={handleSubmit}>
           <div className="mb-6">
             <label
@@ -91,20 +117,7 @@ export default function Login() {
               required
             />
           </div>
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <input
-                type="checkbox"
-                id="remember"
-                name="remember"
-                checked={formData.remember}
-                onChange={handleChange}
-                className="text-[#398AB9] focus:ring-[#398AB9]"
-              />
-              <label htmlFor="remember" className="ml-2 text-sm text-[#1C658C]">
-                Remember me
-              </label>
-            </div>
+          <div className="flex items-center justify-end mb-6">
             <Link
               href="/forgot-password"
               className="text-sm text-[#398AB9] hover:underline"

@@ -10,12 +10,12 @@ export default function Signup() {
     email: "",
     password: "",
     confirmPassword: "",
-    role: "shopOwner", // Default role
   });
   const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
   const router = useRouter();
 
-  const handleChange = (e: any) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prevState) => ({
       ...prevState,
@@ -23,9 +23,10 @@ export default function Signup() {
     }));
   };
 
-  const handleSubmit = async (e: any) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
+    setMessage("");
 
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords do not match");
@@ -40,25 +41,24 @@ export default function Signup() {
           name: formData.name,
           email: formData.email,
           password: formData.password,
-          role: formData.role,
         }),
       });
 
-      if (response.ok) {
-        // Sign in the user after successful registration
-        const result = await signIn("credentials", {
-          redirect: false,
-          email: formData.email,
-          password: formData.password,
-        });
+      const data = await response.json();
 
-        if (result?.error) {
-          setError(result.error);
-        } else {
-          router.push("/");
-        }
+      if (response.ok) {
+        setMessage(
+          data.message ||
+            "Registration successful. Please check your email to verify your account."
+        );
+        // Clear the form
+        setFormData({
+          name: "",
+          email: "",
+          password: "",
+          confirmPassword: "",
+        });
       } else {
-        const data = await response.json();
         setError(data.error || "Registration failed");
       }
     } catch (error) {
@@ -81,6 +81,7 @@ export default function Signup() {
           Create Your Account
         </h1>
         {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+        {message && <p className="text-green-500 text-sm mb-4">{message}</p>}
         <form onSubmit={handleSubmit}>
           <div className="mb-6">
             <label
@@ -153,25 +154,6 @@ export default function Signup() {
               placeholder="Confirm your password"
               required
             />
-          </div>
-          <div className="mb-6">
-            <label
-              htmlFor="role"
-              className="block text-sm font-medium text-[#1C658C]"
-            >
-              Account Type
-            </label>
-            <select
-              id="role"
-              name="role"
-              value={formData.role}
-              onChange={handleChange}
-              className="w-full px-4 py-2 mt-1 border border-[#D8D2CB] rounded-lg focus:outline-none focus:border-[#398AB9] focus:ring-1 focus:ring-[#398AB9]"
-              required
-            >
-              <option value="shopOwner">Shop Owner</option>
-              <option value="manufacturer">Manufacturer</option>
-            </select>
           </div>
           <button
             type="submit"

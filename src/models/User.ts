@@ -31,11 +31,6 @@ const userSchema = new mongoose.Schema({
   forgotPasswordTokenExpiry: Date,
   verifyToken: String,
   verifyTokenExpiry: Date,
-  role: {
-    type: String,
-    enum: ["manufacturer", "shopOwner", "admin"],
-    required: true,
-  },
   provider: {
     type: String,
     enum: ["credentials", "google"],
