@@ -1,5 +1,4 @@
 import User from "@/models/User";
-import bcryptjs from "bcryptjs";
 import { Resend } from "resend";
 
 export const sendEmail = async ({
@@ -26,7 +25,7 @@ export const sendEmail = async ({
       });
 
       const mailresponse = await resend.emails.send({
-        from: "noreply@marketbridge.com",
+        from: "dev@ravindrachoudhary.in",
         to: `${email}`,
         subject: `Market Bridge: Verify your email`,
         html: `
@@ -197,7 +196,7 @@ export const sendEmail = async ({
       });
 
       const mailOptions = await resend.emails.send({
-        from: "noreply@marketbridge.com",
+        from: "dev@ravindrachoudhary.in",
         to: email,
         subject: `Market Bridge: Reset your password`,
         html: `
