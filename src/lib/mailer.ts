@@ -1,12 +1,8 @@
 import User from "@/models/User";
 import { Resend } from "resend";
+import bcryptjs from "bcryptjs";
 
-export const sendEmail = async ({
-  email,
-  emailType,
-  userId,
-  hashedToken,
-}: any) => {
+export const sendEmail = async ({ email, emailType, userId }: any) => {
   try {
     // Check if the emailType is valid (either "VERIFY" or "RESET")
     if (emailType !== "VERIFY" && emailType !== "RESET") {
@@ -17,6 +13,7 @@ export const sendEmail = async ({
 
     // create a hashed token
     const resend = new Resend(process.env.RESEND_API_KEY!);
+    const hashedToken = await bcryptjs.hash(userId.toString(), 10);
 
     if (emailType === "VERIFY") {
       await User.findByIdAndUpdate(userId, {
@@ -251,12 +248,12 @@ export const sendEmail = async ({
             You've requested to reset your password for your Market Bridge account. Click the button below to reset your password:
         </p>
         <p>
-            <a class="button" href="${process.env.DOMAIN}/resetpassword?token=${hashedToken}">Reset Password</a>
+            <a class="button" href="${process.env.DOMAIN}/reset-password?token=${hashedToken}">Reset Password</a>
         </p>
         <p>
             If the button doesn't work, copy and paste the following link into your browser:
         </p>
-        <p class="reset-link">${process.env.DOMAIN}/resetpassword?token=${hashedToken}</p>
+        <p class="reset-link">${process.env.DOMAIN}/reset-password?token=${hashedToken}</p>
         <p>
             If you didn't request a password reset, please ignore this email or contact support if you have concerns.
         </p>

@@ -3,11 +3,10 @@ import { z } from "zod";
 import { Error as MongooseError } from "mongoose";
 import User from "@/models/User";
 import { connect } from "@/lib/db";
-import { hash } from "bcryptjs";
+import bcryptjs from "bcryptjs";
 
-// Define a schema for input validation
 const ResetPasswordSchema = z.object({
-  token: z.string(),
+  token: z.string().min(1, "Token is required"),
   password: z.string().min(8, "Password must be at least 8 characters long"),
 });
 
@@ -15,7 +14,6 @@ export async function POST(req: NextRequest) {
   try {
     await connect();
 
-    // Parse and validate input
     const body = await req.json();
     const result = ResetPasswordSchema.safeParse(body);
 
@@ -28,7 +26,6 @@ export async function POST(req: NextRequest) {
 
     const { token, password } = result.data;
 
-    // Find user by reset token and check if it's expired
     const user = await User.findOne({
       forgotPasswordToken: token,
       forgotPasswordTokenExpiry: { $gt: Date.now() },
@@ -41,10 +38,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Hash the new password
-    const hashedPassword = await hash(password, 12);
+    const hashedPassword = await bcryptjs.hash(password, 10);
 
-    // Update user's password and clear reset token fields
     user.password = hashedPassword;
     user.forgotPasswordToken = undefined;
     user.forgotPasswordTokenExpiry = undefined;

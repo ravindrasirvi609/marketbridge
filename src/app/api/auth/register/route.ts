@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { hash } from "bcryptjs";
+import bcryptjs from "bcryptjs";
 import { z } from "zod";
 import { Error as MongooseError } from "mongoose";
 import User from "@/models/User";
@@ -7,6 +7,8 @@ import { connect } from "@/lib/db";
 import { sendEmail } from "@/lib/mailer";
 import crypto from "crypto";
 
+// Define the number of salt rounds for hashing
+const SALT_ROUNDS = 10;
 // Define a schema for input validation
 const UserSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters long"),
@@ -46,8 +48,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Hash password
-    const hashedPassword = await hash(password, 12);
+    // Generate verify token
+    const salt = await bcryptjs.genSalt(SALT_ROUNDS);
+    const hashedPassword = await bcryptjs.hash(password, salt);
 
     // Create new user
     const newUser = new User({
@@ -59,10 +62,9 @@ export async function POST(req: NextRequest) {
       provider: "credentials",
     });
 
-    // Generate verify token
     const verifyToken = crypto.randomBytes(32).toString("hex");
     newUser.verifyToken = verifyToken;
-    newUser.verifyTokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+    newUser.verifyTokenExpiry = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
 
     await newUser.save();
 

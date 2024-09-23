@@ -65,29 +65,32 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Create JWT token
-    const token = jwt.sign(
-      {
-        userId: user._id,
-        email: user.email,
-        isAdmin: user.isAdmin,
-      },
-      process.env.JWT_SECRET!,
-      { expiresIn: "1d" }
-    );
+    const tokenData = {
+      id: user._id,
+      email: user.email,
+      isVerified: user.isVerified,
+    };
 
-    // Set HTTP-only cookie
-    const response = NextResponse.json(
-      { message: "Login successful" },
-      { status: 200 }
-    );
+    const tokenSecret = process.env.TOKEN_SECRET;
+    if (!tokenSecret) {
+      throw new Error("TOKEN_SECRET is not defined in environment variables");
+    }
+
+    const token = jwt.sign(tokenData, tokenSecret, {
+      expiresIn: "7d",
+    });
+
+    const response = NextResponse.json({
+      message: "Login successful",
+      success: true,
+      email: user.email,
+    });
 
     response.cookies.set("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
-      maxAge: 86400, // 1 day
-      path: "/",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
     return response;
