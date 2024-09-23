@@ -9,26 +9,6 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <header className="bg-[#1C658C] text-white">
-        <nav className="container mx-auto px-6 py-3 flex justify-between items-center">
-          <div className="text-2xl font-bold">MarketBridge</div>
-          <div>
-            <a
-              href="/login"
-              className="px-4 py-2 rounded hover:bg-[#398AB9] transition-colors"
-            >
-              Login
-            </a>
-            <a
-              href="/signup"
-              className="ml-4 px-4 py-2 bg-[#D8D2CB] text-[#1C658C] rounded hover:bg-[#398AB9] transition-colors"
-            >
-              Sign Up
-            </a>
-          </div>
-        </nav>
-      </header>
-
       <main>
         {/* Hero Section */}
         <section className="bg-[#1C658C] text-white py-20">
