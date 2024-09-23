@@ -11,7 +11,13 @@ import crypto from "crypto";
 const UserSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters long"),
   email: z.string().email("Invalid email address"),
-  password: z.string().min(8, "Password must be at least 8 characters long"),
+  password: z
+    .string()
+    .min(8, "Password must be at least 8 characters long")
+    .regex(
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
+      "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character"
+    ),
 });
 
 export async function POST(req: NextRequest) {
@@ -53,12 +59,11 @@ export async function POST(req: NextRequest) {
       provider: "credentials",
     });
 
-    await newUser.save();
-
     // Generate verify token
     const verifyToken = crypto.randomBytes(32).toString("hex");
     newUser.verifyToken = verifyToken;
     newUser.verifyTokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
     await newUser.save();
 
     // Send verification email

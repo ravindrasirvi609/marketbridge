@@ -4,16 +4,14 @@ import { Error as MongooseError } from "mongoose";
 import User from "@/models/User";
 import { connect } from "@/lib/db";
 
-// Define a schema for input validation
 const VerifyTokenSchema = z.object({
-  token: z.string(),
+  token: z.string().min(1, "Token is required"),
 });
 
 export async function POST(req: NextRequest) {
   try {
     await connect();
 
-    // Parse and validate input
     const body = await req.json();
     const result = VerifyTokenSchema.safeParse(body);
 
@@ -26,7 +24,6 @@ export async function POST(req: NextRequest) {
 
     const { token } = result.data;
 
-    // Find user by verification token and check if it's expired
     const user = await User.findOne({
       verifyToken: token,
       verifyTokenExpiry: { $gt: Date.now() },
@@ -39,7 +36,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Update user's verification status and clear verification token fields
     user.isVerified = true;
     user.verifyToken = undefined;
     user.verifyTokenExpiry = undefined;
