@@ -1,14 +1,49 @@
 "use client";
+
 import React, { useState } from "react";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Menu, X, User, Package, PlusCircle, LogOut } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const Header = () => {
   const { data: session } = useSession();
+  const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false);
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+
+  const handleLogout = async () => {
+    try {
+      const response = await fetch("/api/auth/logout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.ok) {
+        await signOut({ redirect: false });
+        router.push("/");
+        router.refresh();
+      } else {
+        console.error("Logout failed");
+      }
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+  };
 
   return (
     <header className="bg-[#1C658C] text-white shadow-md">
@@ -40,7 +75,10 @@ const Header = () => {
                 >
                   <PlusCircle className="mr-1" size={18} /> Add Product
                 </Link>
-                <button className="hover:text-[#D8D2CB] transition-colors flex items-center">
+                <button
+                  className="hover:text-[#D8D2CB] transition-colors flex items-center"
+                  onClick={() => setIsLogoutDialogOpen(true)}
+                >
                   <LogOut className="mr-1" size={18} /> Logout
                 </button>
               </>
@@ -95,7 +133,10 @@ const Header = () => {
                 >
                   Add Product
                 </Link>
-                <button className="block w-full text-left px-3 py-2 rounded-md text-base font-medium hover:bg-[#398AB9] transition-colors">
+                <button
+                  className="block w-full text-left px-3 py-2 rounded-md text-base font-medium hover:bg-[#398AB9] transition-colors"
+                  onClick={() => setIsLogoutDialogOpen(true)}
+                >
                   Logout
                 </button>
               </>
@@ -118,6 +159,28 @@ const Header = () => {
           </nav>
         </div>
       )}
+      {/* Logout confirmation dialog */}
+      <AlertDialog
+        open={isLogoutDialogOpen}
+        onOpenChange={setIsLogoutDialogOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Are you sure you want to log out?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This action will end your current session.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleLogout}>
+              Log out
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </header>
   );
 };
