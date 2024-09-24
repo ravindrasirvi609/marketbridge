@@ -29,7 +29,7 @@ const Header = () => {
                   <User className="mr-1" size={18} /> Profile
                 </Link>
                 <Link
-                  href="/productList"
+                  href="/ProductList"
                   className="hover:text-[#D8D2CB] transition-colors flex items-center"
                 >
                   <Package className="mr-1" size={18} /> Products
