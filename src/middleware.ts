@@ -2,77 +2,59 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 
-// Define the routes that should be accessible without authentication
 const publicRoutes = ["/"];
-
-// Define the routes that should only be accessible when not logged in
 const noAuthRoutes = [
   "/login",
   "/signup",
   "/forgot-password",
   "/reset-password",
 ];
-
-// Define the routes that should only be accessible when logged in
 const authRequiredRoutes = ["/dashboard"];
 
 export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+  const { pathname, origin } = request.nextUrl;
 
-  // Get the NextAuth token
-  const token = await getToken({
-    req: request,
-    secret: process.env.NEXTAUTH_SECRET,
-  });
+  let token;
+  try {
+    token = await getToken({
+      req: request,
+      secret: process.env.NEXTAUTH_SECRET,
+    });
+  } catch (error) {
+    console.error("Error fetching token:", error);
+    return NextResponse.redirect(`${origin}/login`); // Redirect to absolute URL
+  }
 
-  // Determine if the user is logged in (either via NextAuth or manual login)
   const isLoggedIn = !!token;
 
-  // Allow access to public routes for all users
-  if (publicRoutes.some((route) => pathname.startsWith(route))) {
+  // Allow access to public routes like home page
+  if (publicRoutes.includes(pathname)) {
     return NextResponse.next();
   }
 
-  // Redirect logged-in users away from no-auth routes (including login page)
-  if (isLoggedIn && noAuthRoutes.some((route) => pathname.startsWith(route))) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+  // If logged in and trying to access login, signup, etc., redirect to dashboard
+  if (isLoggedIn && noAuthRoutes.includes(pathname)) {
+    return NextResponse.redirect(`${origin}/dashboard`); // Redirect logged-in users
   }
 
-  // Redirect non-logged-in users away from auth-required routes
-  if (
-    !isLoggedIn &&
-    authRequiredRoutes.some((route) => pathname.startsWith(route))
-  ) {
-    const url = new URL("/login", request.url);
-    url.searchParams.set("callbackUrl", encodeURI(request.url));
-    return NextResponse.redirect(url);
+  // If not logged in and trying to access protected routes like dashboard, redirect to login
+  if (!isLoggedIn && authRequiredRoutes.includes(pathname)) {
+    return NextResponse.redirect(`${origin}/login`); // Redirect unauthenticated users
   }
 
-  // For API routes, allow access to auth endpoints without a token
+  // Allow access to API authentication routes
   if (pathname.startsWith("/api/auth")) {
     return NextResponse.next();
   }
 
-  // For all other routes, require authentication
+  // Catch-all: If the user is not logged in, redirect them to the login page
   if (!isLoggedIn) {
-    const url = new URL("/login", request.url);
-    url.searchParams.set("callbackUrl", encodeURI(request.url));
-    return NextResponse.redirect(url);
+    return NextResponse.redirect(`${origin}/login`); // Redirect to login
   }
 
-  // If all checks pass, allow the request to proceed
-  return NextResponse.next();
+  return NextResponse.next(); // Allow access to all other pages
 }
 
-// Configure which routes the middleware should run on
 export const config = {
-  matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
-    "/((?!_next/static|_next/image|favicon.ico).*)",
-  ],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|api/auth).*)"],
 };
